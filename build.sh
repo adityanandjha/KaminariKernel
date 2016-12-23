@@ -16,7 +16,7 @@ bold=`tput bold`;
 normal=`tput sgr0`;
 
 # Let's start...
-echo -e "Building KaminariKernel (CM14.1)...\n";
+echo -e "Building KaminariKernel (CyanogenMod)...\n";
 
 toolchainstr="Which cross-compiler toolchain do you want to use?
 1. Linaro GCC 4.9
@@ -27,6 +27,10 @@ toolchainstr="Which cross-compiler toolchain do you want to use?
 devicestr="Which device do you want to build for?
 1. Moto G (1st gen, GSM/CDMA) (falcon)
 2. Moto G (1st gen, LTE) (peregrine) ";
+
+androidstr="Which Android version do you want to build for?
+1. Android 6.0.x (Marshmallow)
+2. Android 7.x (Nougat) ";
 
 hpstr="Which hotplug driver should this build use?
 1. MPDecision (default)
@@ -95,6 +99,22 @@ while read -p "$devicestr" dev; do
 			echo -e "\nInvalid option. Try again.\n";;
 	esac;
 done;
+
+# Select which Android version the kernel should be built for
+#while read -p "$androidstr" android; do
+#	case $android in
+#		"1")
+#			echo -e "Selected Android version: 6.0.x Marshmallow\n";
+#			android="marshmallow";
+#			break;;
+#		"2")
+#			echo -e "Selected Android version: 7.x Nougat\n";
+#			android="nougat";
+#			break;;
+#		*)
+#			echo -e "\nInvalid option. Try again.\n";;
+#	esac;
+#done;
 
 # Select which hotplug should be used
 while read -p "$hpstr" hp; do
@@ -234,7 +254,7 @@ else
 	maindir=$HOME/Kernel/Zip_CM_BootImg;
 	outdir=$HOME/Kernel/Out_CM_BootImg/$device;
 fi;
-devicedir=$maindir/$device"_N";
+devicedir=$maindir/$device"_common";
 
 
 # Make the zip and out dirs if they don't exist
@@ -262,15 +282,15 @@ fi;
 # Set the zip's name
 if [[ $hp = "asmp" ]]; then
 	if [[ $forceperm = "Y" ]]; then
-		zipname="KaminariCMAlt_"$version"-N_"`echo "${device^}"`"_Permissive";
+		zipname="KaminariCM_"$version"-Alt_"`echo "${device^}"`"_Permissive";
 	else
-		zipname="KaminariCMAlt_"$version"-N_"`echo "${device^}"`;
+		zipname="KaminariCM_"$version"-Alt_"`echo "${device^}"`;
 	fi;
 else
 	if [[ $forceperm = "Y" ]]; then
-		zipname="KaminariCM_"$version"-N_"`echo "${device^}"`"_Permissive";
+		zipname="KaminariCM_"$version"_"`echo "${device^}"`"_Permissive";
 	else
-		zipname="KaminariCM_"$version"-N_"`echo "${device^}"`;
+		zipname="KaminariCM_"$version"_"`echo "${device^}"`;
 	fi;
 fi;
 
