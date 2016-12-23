@@ -794,6 +794,17 @@ config SENSORS_LIS3DH_MOT
 	help
 	 Say yes here if you wish to include the ST Micro
 	 LIS3DH Mot accelerometer driver.
+	 
+config SENSORS_LIS3DH_MOT_USE_CM_DRIVER
+	bool "LIS3DH_MOT Accelerometer - Use CyanogenMod driver"
+	default n
+	depends on SENSORS_LIS3DH_MOT
+	help
+	 Say yes here if you wish to use the CyanogenMod version of the ST Micro
+	 LIS3DH Mot accelerometer driver.	 
+	 
+	 Use it only on CyanogenMod-compatible builds. This driver does NOT work with
+	 the stock Motorola firmware.
 
 config SENSORS_BMA2X2
 	tristate "BMA255/BMA250E/BMA222E/BMA280 acceleration sensor support"

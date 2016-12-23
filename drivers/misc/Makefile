@@ -83,7 +83,7 @@ obj-$(CONFIG_HOB_SHARED_RAM) += hob_ram_mmap.o
 obj-$(CONFIG_DROPBOX) += dropbox.o
 obj-$(CONFIG_SENSORS_AK8963)	+= akm8963.o
 obj-$(CONFIG_USR_RESET_WARNING) += usr-reset-warning.o
-ifdef CONFIG_CM13_KERNEL
+ifdef CONFIG_SENSORS_LIS3DH_MOT_USE_CM_DRIVER
 obj-$(CONFIG_SENSORS_LIS3DH_MOT)    += lis3dh_mot.o
 else
 obj-$(CONFIG_SENSORS_LIS3DH_MOT)    += lis3dh_mot_stock.o
