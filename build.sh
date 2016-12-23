@@ -113,7 +113,7 @@ while read -p "$hpstr" hp; do
 done;		
 	
 		
-# Clean everything via `make mrproper`.
+# Clean everything via `make clean` or `make mrproper`.
 # Recommended if there were extensive changes to the source code.
 while read -p "$cleanstr" clean; do
 	case $clean in
