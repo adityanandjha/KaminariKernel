@@ -250,7 +250,7 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = ccache gcc
 HOSTCXX      = ccache g++
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -std=gnu89
 HOSTCXXFLAGS = -O2
 
 # Decide whether to build built-in, modular, or both.
@@ -335,13 +335,8 @@ include $(srctree)/scripts/Kbuild.include
 
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
-LD		+= -O3 --strip-debug
+LD		+= --strip-debug
 CC		= ccache $(CROSS_COMPILE)gcc
-CC		+= -O3 -march=armv7ve -mtune=cortex-a7 -fmodulo-sched -fmodulo-sched-allow-regmoves
-CC		+= -fgraphite-identity -floop-block -floop-interchange -floop-strip-mine
-CC		+= -ftree-loop-linear -ftree-loop-distribution
-CC		+= -Wno-maybe-uninitialized -Wno-array-bounds
-CC		+= --param l1-cache-size=16 --param l1-cache-line-size=16 --param l2-cache-size=2048
 CPP		= $(CC) -E
 AR		= $(CROSS_COMPILE)ar
 NM		= $(CROSS_COMPILE)nm
@@ -572,7 +567,7 @@ all: vmlinux
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os $(call cc-disable-warning,maybe-uninitialized,)
 else
-KBUILD_CFLAGS	+= -O3
+KBUILD_CFLAGS	+= -O2 $(call cc-disable-warning,maybe-uninitialized,)
 endif
 
 # conserve stack if available
