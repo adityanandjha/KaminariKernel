@@ -194,24 +194,26 @@ while read -p "$zipstr" zipmode; do
 done;
 
 # [Classic mode only] Select Android version. Each version uses a different ramdisk
-while read -p "$androidstr" android; do
-	case $android in
-		"1")
-			echo -e "Selected Android version: 6.0.x Marshmallow\n";
-			android="marshmallow";
-			break;;
-		"2")
-			echo -e "Selected Android version: 7.0 Nougat\n";
-			android="nougat";
-			break;;
-		"3")
-			echo -e "Selected Android version: 7.1.x Nougat MR1\n";
-			android="nougat_mr1";
-			break;;		
-		*)
-			echo -e "\nInvalid option. Try again.\n";;
-	esac;
-done;
+if [[ $zipmode = "classic" ]]; then
+	while read -p "$androidstr" android; do
+		case $android in
+			"1")
+				echo -e "Selected Android version: 6.0.x Marshmallow\n";
+				android="marshmallow";
+				break;;
+			"2")
+				echo -e "Selected Android version: 7.0 Nougat\n";
+				android="nougat";
+				break;;
+			"3")
+				echo -e "Selected Android version: 7.1.x Nougat MR1\n";
+				android="nougat_mr1";
+				break;;		
+			*)
+				echo -e "\nInvalid option. Try again.\n";;
+		esac;
+	done;
+fi;
 
 # Determine if we should force SELinux permissive mode
 while read -p "$selstr" forceperm; do
