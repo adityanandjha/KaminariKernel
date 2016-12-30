@@ -16,7 +16,7 @@ bold=`tput bold`;
 normal=`tput sgr0`;
 
 # Let's start...
-echo -e "Building KaminariKernel (CyanogenMod)...\n";
+echo -e "Building KaminariKernel (AOSP)...\n";
 
 toolchainstr="Which cross-compiler toolchain do you want to use?
 1. Linaro 4.9
@@ -32,7 +32,8 @@ devicestr="Which device do you want to build for?
 
 androidstr="Which Android version do you want to build for?
 1. Android 6.0.x (Marshmallow)
-2. Android 7.x (Nougat) ";
+2. Android 7.0 (Nougat)
+3. Android 7.1.x (Nougat MR1) ";
 
 hpstr="Which hotplug driver should this build use?
 1. MPDecision (default)
@@ -42,7 +43,7 @@ cleanstr="Do you want to remove everything from the last build? (Y/N)
 
 You ${bold}MUST${normal} do this if: 
 1. You have changed toolchains;
-2. You have built a CM Standard version and will now build a CM Alternative (or vice-versa). ";
+2. You have built an AOSP Standard version and will now build an AOSP Alternative (or vice-versa). ";
 
 zipstr="Which installation type do you want to use?
 1. AnyKernel (recommended/default)
@@ -110,22 +111,6 @@ while read -p "$devicestr" dev; do
 			echo -e "\nInvalid option. Try again.\n";;
 	esac;
 done;
-
-# Select which Android version the kernel should be built for
-#while read -p "$androidstr" android; do
-#	case $android in
-#		"1")
-#			echo -e "Selected Android version: 6.0.x Marshmallow\n";
-#			android="marshmallow";
-#			break;;
-#		"2")
-#			echo -e "Selected Android version: 7.x Nougat\n";
-#			android="nougat";
-#			break;;
-#		*)
-#			echo -e "\nInvalid option. Try again.\n";;
-#	esac;
-#done;
 
 # Select which hotplug should be used
 while read -p "$hpstr" hp; do
@@ -208,6 +193,26 @@ while read -p "$zipstr" zipmode; do
 	esac;
 done;
 
+# [Classic mode only] Select Android version. Each version uses a different ramdisk
+while read -p "$androidstr" android; do
+	case $android in
+		"1")
+			echo -e "Selected Android version: 6.0.x Marshmallow\n";
+			android="marshmallow";
+			break;;
+		"2")
+			echo -e "Selected Android version: 7.0 Nougat\n";
+			android="nougat";
+			break;;
+		"3")
+			echo -e "Selected Android version: 7.1.x Nougat MR1\n";
+			android="nougat_mr1";
+			break;;		
+		*)
+			echo -e "\nInvalid option. Try again.\n";;
+	esac;
+done;
+
 # Determine if we should force SELinux permissive mode
 while read -p "$selstr" forceperm; do
 	case $forceperm in
@@ -232,7 +237,7 @@ starttime=`date +"%s"`;
 rm -rf arch/arm/boot/*.dtb;
 			
 # Build the kernel
-make cm/"$device"_defconfig;
+make aosp/"$device"_defconfig;
 
 # Permissive selinux? Edit .config
 if [[ $forceperm = "Y" ]]; then
@@ -259,13 +264,13 @@ fi;
 
 # Define directories (zip, out)
 if [[ $zipmode = "ak" ]]; then
-	maindir=$HOME/Kernel/Zip_CM_AK;
-	outdir=$HOME/Kernel/Out_CM_AK/$device;
+	maindir=$HOME/Kernel/Zip_AOSP_AK;
+	outdir=$HOME/Kernel/Out_AOSP_AK/$device;
 else
-	maindir=$HOME/Kernel/Zip_CM_BootImg;
-	outdir=$HOME/Kernel/Out_CM_BootImg/$device;
+	maindir=$HOME/Kernel/Zip_AOSP_BootImg;
+	outdir=$HOME/Kernel/Out_AOSP_BootImg/$device;
 fi;
-devicedir=$maindir/$device"_common";
+devicedir=$maindir/$device;
 
 
 # Make the zip and out dirs if they don't exist
@@ -278,12 +283,30 @@ fi;
 ./bootimgtools/dtbToolCM -2 -s 2048 -o /tmp/dt.img -p scripts/dtc/ arch/arm/boot/;
 
 if [[ $zipmode = "classic" ]]; then
-	cmdline="androidboot.bootdevice=msm_sdcc.1 androidboot.hardware=qcom vmalloc=400M utags.blkdev=/dev/block/platform/msm_sdcc.1/by-name/utags"
-	echo -e "Creating boot.img...";
-	./bootimgtools/mkbootimg --kernel arch/arm/boot/zImage --ramdisk $maindir/prepacked_ramdisks/ramdisk_"$device".cpio.gz --board "" --base 0x00000000 \
-	--kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --tags_offset 0x00000100 \
-	--cmdline "$cmdline" \
-	--pagesize 2048 --dt /tmp/dt.img --output $devicedir/boot.img;
+	# Prepacked ramdisk must match Android version
+	case $android in
+		"marshmallow")
+			cmdline="androidboot.bootdevice=msm_sdcc.1 androidboot.hardware=qcom vmalloc=400M utags.blkdev=/dev/block/platform/msm_sdcc.1/by-name/utags"
+			echo -e "Creating boot.img...";
+			./bootimgtools/mkbootimg --kernel arch/arm/boot/zImage --ramdisk $maindir/prepacked_ramdisks_M/ramdisk_"$device".cpio.gz --board "" --base 0x00000000 \
+			--kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --tags_offset 0x00000100 \
+			--cmdline "$cmdline" \
+			--pagesize 2048 --dt /tmp/dt.img --output $devicedir/boot.img;;
+		"nougat")
+			cmdline="androidboot.bootdevice=msm_sdcc.1 androidboot.hardware=qcom vmalloc=400M utags.blkdev=/dev/block/platform/msm_sdcc.1/by-name/utags"
+			echo -e "Creating boot.img...";
+			./bootimgtools/mkbootimg --kernel arch/arm/boot/zImage --ramdisk $maindir/prepacked_ramdisks_N/ramdisk_"$device".cpio.gz --board "" --base 0x00000000 \
+			--kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --tags_offset 0x00000100 \
+			--cmdline "$cmdline" \
+			--pagesize 2048 --dt /tmp/dt.img --output $devicedir/boot.img;;
+		"nougat_mr1")
+			cmdline="androidboot.bootdevice=msm_sdcc.1 androidboot.hardware=qcom vmalloc=400M utags.blkdev=/dev/block/platform/msm_sdcc.1/by-name/utags"
+			echo -e "Creating boot.img...";
+			./bootimgtools/mkbootimg --kernel arch/arm/boot/zImage --ramdisk $maindir/prepacked_ramdisks_N_MR1/ramdisk_"$device".cpio.gz --board "" --base 0x00000000 \
+			--kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --tags_offset 0x00000100 \
+			--cmdline "$cmdline" \
+			--pagesize 2048 --dt /tmp/dt.img --output $devicedir/boot.img;;
+	esac;
 else # Just copy zImage and dt.img. AnyKernel will do the rest later.
 	echo -e "Copying zImage & dt.img...";
 	cp -f /tmp/dt.img $devicedir/;
@@ -293,15 +316,15 @@ fi;
 # Set the zip's name
 if [[ $hp = "asmp" ]]; then
 	if [[ $forceperm = "Y" ]]; then
-		zipname="KaminariCM_"$version"-Alt_"`echo "${device^}"`"_Permissive";
+		zipname="KaminariAOSP_"$version"-Alternative_"`echo "${device^}"`"_SELinuxForcePerm";
 	else
-		zipname="KaminariCM_"$version"-Alt_"`echo "${device^}"`;
+		zipname="KaminariAOSP_"$version"-Alternative_"`echo "${device^}"`;
 	fi;
 else
 	if [[ $forceperm = "Y" ]]; then
-		zipname="KaminariCM_"$version"_"`echo "${device^}"`"_Permissive";
+		zipname="KaminariAOSP_"$version"_"`echo "${device^}"`"_SELinuxForcePerm";
 	else
-		zipname="KaminariCM_"$version"_"`echo "${device^}"`;
+		zipname="KaminariAOSP_"$version"_"`echo "${device^}"`;
 	fi;
 fi;
 
