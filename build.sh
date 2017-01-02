@@ -201,9 +201,22 @@ if [ ! -d $maindir ] || [ ! -d $outdir ]; then
 	mkdir -p $maindir && mkdir -p $outdir;
 fi;
 
+# Modules
+[ -d $devicedir/modules ] || mkdir -p $devicedir/modules;
+[ -d $devicedir/modules ] && rm -rf $devicedir/modules/*;
+[ -d $devicedir/modules/pronto ] || mkdir -p $devicedir/modules/pronto;
+moduledir=$devicedir/modules;
+# Copy the modules
+echo -e "Copying kernel modules...\n";
+for mod in `find . -type f -name "*.ko"`; do
+	cp -f $mod $moduledir/;
+done;
+# Move wi-fi module (wlan.ko) to modules/pronto & rename it to pronto_wlan.ko. This is very important!!
+# A symlink to it (named wlan.ko) will be created at installation time.
+mv $moduledir/wlan.ko $moduledir/pronto/pronto_wlan.ko;
 
 # Use zImage + dt.img
-./bootimgtools/dtbToolCM -2 -s 2048 -o /tmp/dt.img -p scripts/dtc/ arch/arm/boot/;
+./bootimgtools/dtbTool -s 2048 -o /tmp/dt.img -p scripts/dtc/ arch/arm/boot/;
 # Just copy zImage and dt.img. AnyKernel will do the rest later.
 echo -e "Copying zImage & dt.img...";
 cp -f /tmp/dt.img $devicedir/;
