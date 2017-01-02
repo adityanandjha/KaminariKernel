@@ -30,11 +30,6 @@ devicestr="Which device do you want to build for?
 1. Moto G (1st gen, GSM/CDMA) (falcon)
 2. Moto G (1st gen, LTE) (peregrine) ";
 
-androidstr="Which Android version do you want to build for?
-1. Android 6.0.x (Marshmallow)
-2. Android 7.0 (Nougat)
-3. Android 7.1.x (Nougat MR1) ";
-
 hpstr="Which hotplug driver should this build use?
 1. MPDecision (default)
 2. AutoSMP ";
@@ -44,10 +39,6 @@ cleanstr="Do you want to remove everything from the last build? (Y/N)
 You ${bold}MUST${normal} do this if: 
 1. You have changed toolchains;
 2. You have built an AOSP Standard version and will now build an AOSP Alternative (or vice-versa). ";
-
-zipstr="Which installation type do you want to use?
-1. AnyKernel (recommended/default)
-2. Classic (boot.img) (Use only if you have problems with AnyKernel) ";
 
 selstr="Do you want to force SELinux to stay in Permissive mode?
 Only say Yes if you're aware of the security risks this may introduce! (Y/N) ";
@@ -177,44 +168,6 @@ while read -p "Do you want to specify a release/version number? (Just press ente
 	break;
 done;
 
-# Select which installation type will be used
-while read -p "$zipstr" zipmode; do
-	case $zipmode in
-		"1" | "" | " ")
-			zipmode="ak";
-			echo -e "Selected installation type: AnyKernel\n";
-			break;;
-		"2")
-			zipmode="classic";
-			echo -e "Selected installation type: Classic\n";
-			break;;
-		*)
-			echo -e "\nInvalid option. Try again.\n";;
-	esac;
-done;
-
-# [Classic mode only] Select Android version. Each version uses a different ramdisk
-if [[ $zipmode = "classic" ]]; then
-	while read -p "$androidstr" android; do
-		case $android in
-			"1")
-				echo -e "Selected Android version: 6.0.x Marshmallow\n";
-				android="marshmallow";
-				break;;
-			"2")
-				echo -e "Selected Android version: 7.0 Nougat\n";
-				android="nougat";
-				break;;
-			"3")
-				echo -e "Selected Android version: 7.1.x Nougat MR1\n";
-				android="nougat_mr1";
-				break;;		
-			*)
-				echo -e "\nInvalid option. Try again.\n";;
-		esac;
-	done;
-fi;
-
 # Determine if we should force SELinux permissive mode
 while read -p "$selstr" forceperm; do
 	case $forceperm in
@@ -265,13 +218,8 @@ else
 fi;
 
 # Define directories (zip, out)
-if [[ $zipmode = "ak" ]]; then
-	maindir=$HOME/Kernel/Zip_AOSP_AK;
-	outdir=$HOME/Kernel/Out_AOSP_AK/$device;
-else
-	maindir=$HOME/Kernel/Zip_AOSP_BootImg;
-	outdir=$HOME/Kernel/Out_AOSP_BootImg/$device;
-fi;
+maindir=$HOME/Kernel/Zip_AOSP;
+outdir=$HOME/Kernel/Out_AOSP/$device;
 devicedir=$maindir/$device;
 
 
@@ -283,37 +231,10 @@ fi;
 
 # Use zImage + dt.img
 ./bootimgtools/dtbToolCM -2 -s 2048 -o /tmp/dt.img -p scripts/dtc/ arch/arm/boot/;
-
-if [[ $zipmode = "classic" ]]; then
-	# Prepacked ramdisk must match Android version
-	case $android in
-		"marshmallow")
-			cmdline="androidboot.bootdevice=msm_sdcc.1 androidboot.hardware=qcom vmalloc=400M utags.blkdev=/dev/block/platform/msm_sdcc.1/by-name/utags"
-			echo -e "Creating boot.img...";
-			./bootimgtools/mkbootimg --kernel arch/arm/boot/zImage --ramdisk $maindir/prepacked_ramdisks_M/ramdisk_"$device".cpio.gz --board "" --base 0x00000000 \
-			--kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --tags_offset 0x00000100 \
-			--cmdline "$cmdline" \
-			--pagesize 2048 --dt /tmp/dt.img --output $devicedir/boot.img;;
-		"nougat")
-			cmdline="androidboot.bootdevice=msm_sdcc.1 androidboot.hardware=qcom vmalloc=400M utags.blkdev=/dev/block/platform/msm_sdcc.1/by-name/utags"
-			echo -e "Creating boot.img...";
-			./bootimgtools/mkbootimg --kernel arch/arm/boot/zImage --ramdisk $maindir/prepacked_ramdisks_N/ramdisk_"$device".cpio.gz --board "" --base 0x00000000 \
-			--kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --tags_offset 0x00000100 \
-			--cmdline "$cmdline" \
-			--pagesize 2048 --dt /tmp/dt.img --output $devicedir/boot.img;;
-		"nougat_mr1")
-			cmdline="androidboot.bootdevice=msm_sdcc.1 androidboot.hardware=qcom vmalloc=400M utags.blkdev=/dev/block/platform/msm_sdcc.1/by-name/utags"
-			echo -e "Creating boot.img...";
-			./bootimgtools/mkbootimg --kernel arch/arm/boot/zImage --ramdisk $maindir/prepacked_ramdisks_N_MR1/ramdisk_"$device".cpio.gz --board "" --base 0x00000000 \
-			--kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --tags_offset 0x00000100 \
-			--cmdline "$cmdline" \
-			--pagesize 2048 --dt /tmp/dt.img --output $devicedir/boot.img;;
-	esac;
-else # Just copy zImage and dt.img. AnyKernel will do the rest later.
-	echo -e "Copying zImage & dt.img...";
-	cp -f /tmp/dt.img $devicedir/;
-	cp -f arch/arm/boot/zImage $devicedir/;
-fi;
+# Just copy zImage and dt.img. AnyKernel will do the rest later.
+echo -e "Copying zImage & dt.img...";
+cp -f /tmp/dt.img $devicedir/;
+cp -f arch/arm/boot/zImage $devicedir/;
 
 # Set the zip's name
 if [[ $hp = "asmp" ]]; then
