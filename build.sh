@@ -16,67 +16,68 @@ bold=`tput bold`;
 normal=`tput sgr0`;
 
 # Let's start...
-echo -e "Building KaminariKernel...\n";
+echo -e "Building KaminariKernel (Identity Crisis)...\n";
 
 toolchainstr="Which cross-compiler toolchain do you want to use?
-1. Linaro GCC 4.9
-2. Google/AOSP GCC 4.8
-3. Google/AOSP GCC 4.9 
-4. Uber GCC 4.9 (default) ";
+1. Linaro 4.9
+2. Linaro 6.2
+3. Google/AOSP 4.8
+4. Google/AOSP 4.9 
+5. UberTC 4.9 (default)
+6. UberTC 6.0 ";
 
 devicestr="Which device do you want to build for?
 1. Moto G (1st gen, GSM/CDMA) (falcon)
 2. Moto G (1st gen, LTE) (peregrine) ";
 
-romstr="Which ROM do you want to build for?
-1. AOSP/CM/Any non-stock ROM (Standard, MPDecision)
-2. AOSP/CM/Any non-stock ROM (Alternative, AutoSMP)
-3. Identity Crisis 6 ";
-
 cleanstr="Do you want to remove everything from the last build? (Y/N)
 
 You ${bold}MUST${normal} do this if: 
 1. You have changed toolchains;
-2. You have built a CM Standard version and will now build a CM Alternative (or vice-versa);
-3. You have built any CM version and will now build an IDCrisis version (or vice-versa). "
-
-zipstr="Which installation type do you want to use?
-1. AnyKernel (recommended/default)
-2. Classic (boot.img) (Use only if you have problems with AnyKernel) ";
+2. You have built a Standard version and will now build Alternative (or the other way around). ";
 
 selstr="Do you want to force SELinux to stay in Permissive mode?
 Only say Yes if you're aware of the security risks this may introduce! (Y/N) ";
-
 
 # Select which toolchain should be used & Set up the cross-compiler (pt. 2)
 while read -p "$toolchainstr" tc; do
 	case $tc in
 		"1")
-			echo -e "Selected toolchain: Linaro GCC 4.9\n";
+			echo -e "Selected toolchain: Linaro 4.9\n";
 			export PATH=$HOME/Toolchains/Linaro-4.9-CortexA7/bin:$PATH;
 			export CROSS_COMPILE=arm-cortex_a7-linux-gnueabihf-;
 			break;;
 		"2")
-			echo -e "Selected toolchain: Google/AOSP GCC 4.8\n";
+			echo -e "Selected toolchain: Linaro 6.2\n";
+			export PATH=$HOME/Toolchains/Linaro-6.2-Generic/bin:$PATH;
+			export CROSS_COMPILE=arm-linux-gnueabihf-;
+			break;;			
+		"3")
+			echo -e "Selected toolchain: Google 4.8\n";
 			export PATH=$HOME/Toolchains/Google-4.8-Generic/bin:$PATH;
 			export CROSS_COMPILE=arm-eabi-;
 			break;;
 
-		"3")
-			echo -e "Selected toolchain: Google/AOSP GCC 4.9\n";
+		"4")
+			echo -e "Selected toolchain: Google 4.9\n";
 			export PATH=$HOME/Toolchains/Google-4.9-Generic/bin:$PATH;
 			export CROSS_COMPILE=arm-linux-androideabi-;
 			break;;
-		"4" | "" | " ")
-			echo -e "Selected toolchain: Uber GCC 4.9\n";
+		"5" | "" | " ")
+			echo -e "Selected toolchain: UberTC 4.9\n";
 			export PATH=$HOME/Toolchains/Uber-4.9-Generic/bin:$PATH;
 			export CROSS_COMPILE=arm-eabi-;
 			break;;
-			
+		"6")
+			echo -e "Selected toolchain: UberTC 6.0\n";
+			export PATH=$HOME/Toolchains/Uber-6.0-Generic/bin:$PATH;
+			export CROSS_COMPILE=arm-eabi-;
+			break;;			
 		*)
 			echo -e "\nInvalid option. Try again.\n";;
 	esac;
 done;			
+		
 
 # Select which device the kernel should be built for
 while read -p "$devicestr" dev; do
@@ -97,29 +98,8 @@ while read -p "$devicestr" dev; do
 			echo -e "\nInvalid option. Try again.\n";;
 	esac;
 done;
-
-# Select which ROM the kernel should be built for
-while read -p "$romstr" rom; do
-	case $rom in
-		"1")
-			echo -e "Selected ROM: Non-stock (AOSP/CM/etc.) / Standard\n"
-			rom="cm";
-			break;;
-		"2")
-			echo -e "Selected ROM: Non-stock (AOSP/CM/etc.) / Alternative\n"
-			rom="cm_alt";
-			break;;
-		"3")
-			echo -e "Selected ROM: Identity Crisis 6\n"
-			rom="idcrisis";
-			break;;			
-		*)
-			echo -e "\nInvalid option. Try again.\n";;
-	esac;
-done;		
-	
 		
-# Clean everything via `make mrproper`.
+# Clean everything via `make clean` or `make mrproper`.
 # Recommended if there were extensive changes to the source code.
 while read -p "$cleanstr" clean; do
 	case $clean in
@@ -167,22 +147,6 @@ while read -p "Do you want to specify a release/version number? (Just press ente
 	break;
 done;
 
-# Select which installation type will be used
-while read -p "$zipstr" zipmode; do
-	case $zipmode in
-		"1" | "" | " ")
-			zipmode="ak";
-			echo -e "Selected installation type: AnyKernel\n";
-			break;;
-		"2")
-			zipmode="classic";
-			echo -e "Selected installation type: Classic\n";
-			break;;
-		*)
-			echo -e "\nInvalid option. Try again.\n";;
-	esac;
-done;
-
 # Determine if we should force SELinux permissive mode
 while read -p "$selstr" forceperm; do
 	case $forceperm in
@@ -207,21 +171,11 @@ starttime=`date +"%s"`;
 rm -rf arch/arm/boot/*.dtb;
 			
 # Build the kernel
-if [[ $rom = "idcrisis" ]]; then
-	make stock/"$device"_defconfig;
-else
-	make cm/"$device"_defconfig;
-fi;
+make idcrisis/"$device"_defconfig;
 
 # Permissive selinux? Edit .config
 if [[ $forceperm = "Y" ]]; then
 	sed -i s/"# CONFIG_SECURITY_SELINUX_FORCE_PERMISSIVE is not set"/"CONFIG_SECURITY_SELINUX_FORCE_PERMISSIVE=y"/ .config;
-fi;
-
-# CM13 alt version? Also edit .config
-if [[ $rom = "cm_alt" ]]; then
-	sed -i s/"# CONFIG_ASMP is not set"/"CONFIG_ASMP=y"/ .config;
-	sed -i s/"# CONFIG_CPU_BOOST is not set"/"CONFIG_CPU_BOOST=y"/ .config;	
 fi;
 
 make -j4;
@@ -237,26 +191,9 @@ else
 fi;
 
 # Define directories (zip, out)
-if [[ $rom = "idcrisis" ]]; then
-	if [[ $zipmode = "ak" ]]; then
-		maindir=$HOME/Kernel/Zip_IdCrisis_AK;
-		outdir=$HOME/Kernel/Out_IdCrisis_AK/$device;
-	else
-		maindir=$HOME/Kernel/Zip_IdCrisis_BootImg;
-		outdir=$HOME/Kernel/Out_IdCrisis_BootImg/$device;
-	fi;
-	devicedir=$maindir/$device;
-else
-	if [[ $zipmode = "ak" ]]; then
-		maindir=$HOME/Kernel/Zip_CM_AK;
-		outdir=$HOME/Kernel/Out_CM_AK/$device"_M";
-	else
-		maindir=$HOME/Kernel/Zip_CM_BootImg;
-		outdir=$HOME/Kernel/Out_CM_BootImg/$device"_M";
-	fi;
-	devicedir=$maindir/$device"_M";
-fi;
-
+maindir=$HOME/Kernel/Zip_ID;
+outdir=$HOME/Kernel/Out_ID/$device;
+devicedir=$maindir/$device;
 
 
 # Make the zip and out dirs if they don't exist
@@ -264,77 +201,19 @@ if [ ! -d $maindir ] || [ ! -d $outdir ]; then
 	mkdir -p $maindir && mkdir -p $outdir;
 fi;
 
-# [For stock/IDCrisis ROM only] Make the modules dir if it doesn't exist.
-# Remove any previously built modules as well.
-if [[ $rom = "idcrisis" ]]; then
-	if [[ $zipmode = "ak" ]]; then
-		[ -d $devicedir/modules ] || mkdir -p $devicedir/modules;
-		[ -d $devicedir/modules ] && rm -rf $devicedir/modules/*;
-		[ -d $devicedir/modules/pronto ] || mkdir -p $devicedir/modules/pronto;
-		moduledir=$devicedir/modules;
-	else
-		[ -d $devicedir/system/lib/modules ] || mkdir -p $devicedir/system/lib/modules;
-		[ -d $devicedir/system/lib/modules ] && rm -rf $devicedir/system/lib/modules/*;	
-		[ -d $devicedir/system/lib/modules/pronto ] || mkdir -p $devicedir/system/lib/modules/pronto;
-		moduledir=$devicedir/system/lib/modules;
-	fi;
 
-	# Copy the modules
-	echo -e "Copying kernel modules...\n";
-	for mod in `find . -type f -name "*.ko"`; do
-		cp -f $mod $moduledir/;
-	done;
-	# Move wi-fi module (wlan.ko) to modules/pronto & rename it to pronto_wlan.ko. This is very important!!
-	# A symlink to it (named wlan.ko) will be created at installation time.
-	mv $moduledir/wlan.ko $moduledir/pronto/pronto_wlan.ko;
-fi;
+# Use zImage + dt.img
+./bootimgtools/dtbToolCM -2 -s 2048 -o /tmp/dt.img -p scripts/dtc/ arch/arm/boot/;
+# Just copy zImage and dt.img. AnyKernel will do the rest later.
+echo -e "Copying zImage & dt.img...";
+cp -f /tmp/dt.img $devicedir/;
+cp -f arch/arm/boot/zImage $devicedir/;
 
-# Use zImage + dt.img instead of using zImage-dtb
-echo -e "Creating dt.img..."
-# Use dtbTool if building for the stock ROM; dtbToolCM if building for AOSP/CM
-if [[ $rom = "idcrisis" ]]; then
-	./bootimgtools/dtbTool -s 2048 -o /tmp/dt.img -p scripts/dtc/ arch/arm/boot/;
+# Set the zip's name
+if [[ $forceperm = "Y" ]]; then
+	zipname="KaminariIDCrisis_"$version"_"`echo "${device^}"`"_SELinuxForcePerm";
 else
-	./bootimgtools/dtbToolCM -2 -s 2048 -o /tmp/dt.img -p scripts/dtc/ arch/arm/boot/;
-fi;
-
-# Only create a boot.img if we're using classic mode
-if [[ $zipmode = "classic" ]]; then
-	if [[ $rom = "idcrisis" ]]; then
-		cmdline="console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0 androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x37 vmalloc=400M utags.blkdev=/dev/block/platform/msm_sdcc.1/by-name/utags movablecore=160M";
-	else
-		cmdline="androidboot.bootdevice=msm_sdcc.1 androidboot.hardware=qcom vmalloc=400M utags.blkdev=/dev/block/platform/msm_sdcc.1/by-name/utags"
-	fi;
-	echo -e "Creating boot.img...";
-	./bootimgtools/mkbootimg --kernel arch/arm/boot/zImage --ramdisk $maindir/prepacked_ramdisks/ramdisk_"$device".cpio.gz --board "" --base 0x00000000 \
-	--kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --tags_offset 0x00000100 \
-	--cmdline "$cmdline" \
-	--pagesize 2048 --dt /tmp/dt.img --output $devicedir/boot.img;
-else # Just copy zImage and dt.img. AnyKernel will do the rest later.
-	echo -e "Copying zImage & dt.img...";
-	cp -f /tmp/dt.img $devicedir/;
-	cp -f arch/arm/boot/zImage $devicedir/;
-fi;
-
-# Name the flashable zip
-if [[ $rom = "idcrisis" ]]; then
-	if [[ $forceperm = "Y" ]]; then
-		zipname="KaminariIDCrisis_"$version"_"`echo "${device^}"`"_Permissive";
-	else
-		zipname="KaminariIDCrisis_"$version"_"`echo "${device^}"`;
-	fi;
-elif [[ $rom = "cm_alt" ]]; then
-	if [[ $forceperm = "Y" ]]; then
-		zipname="KaminariCMAlt_"$version"-M_"`echo "${device^}"`"_Permissive";
-	else
-		zipname="KaminariCMAlt_"$version"-M_"`echo "${device^}"`;
-	fi;
-else
-	if [[ $forceperm = "Y" ]]; then
-		zipname="KaminariCM_"$version"-M_"`echo "${device^}"`"_Permissive";
-	else
-		zipname="KaminariCM_"$version"-M_"`echo "${device^}"`;
-	fi;
+	zipname="KaminariIDCrisis_"$version"_"`echo "${device^}"`;
 fi;
 
 # Zip the stuff we need & finish
@@ -347,11 +226,7 @@ case $device in
 	# "titan")
 		# echo -e "Device: Moto G 2nd Gen (titan/thea)" > $devicedir/device.txt;;
 esac;
-if [[ $rom = "cm_alt" ]]; then
-	echo -e "Version: $version-alt" > $devicedir/version.txt;
-else
-	echo -e "Version: $version" > $devicedir/version.txt;
-fi;
+echo -e "Version: $version" > $devicedir/version.txt;
 cd $maindir/common;
 zip -r9 $outdir/$zipname.zip . > /dev/null;
 cd $devicedir;
@@ -362,5 +237,4 @@ echo -e "Build finished on:\n`date +"%A, %d %B %Y @ %H:%M:%S %Z (GMT %:z)"`\n`da
 finishtime=`date +"%s"`;
 finishdiff=$(($finishtime - $starttime));
 echo -e "This build took: $(($finishdiff / 60)) minute(s) and $(($finishdiff % 60)) second(s).\n";
-
 
