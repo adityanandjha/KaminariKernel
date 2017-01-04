@@ -30,15 +30,9 @@ devicestr="Which device do you want to build for?
 1. Moto G (1st gen, GSM/CDMA) (falcon)
 2. Moto G (1st gen, LTE) (peregrine) ";
 
-hpstr="Which hotplug driver should this build use?
-1. MPDecision (default)
-2. AutoSMP ";
-
 cleanstr="Do you want to remove everything from the last build? (Y/N)
 
-You ${bold}MUST${normal} do this if: 
-1. You have changed toolchains;
-2. You have built an AOSP Standard version and will now build an AOSP Alternative (or vice-versa). ";
+You ${bold}MUST${normal} do this if you have changed toolchains! ";
 
 selstr="Do you want to force SELinux to stay in Permissive mode?
 Only say Yes if you're aware of the security risks this may introduce! (Y/N) ";
@@ -94,31 +88,10 @@ while read -p "$devicestr" dev; do
 			echo -e "Selected device: Moto G LTE (peregrine)\n"
 			device="peregrine";
 			break;;
-#		"3")
-#			echo -e "Selected device: Moto G 2nd Gen (GSM/LTE) (titan/thea)\n"
-#			device="titan";
-#			break;;
 		*)
 			echo -e "\nInvalid option. Try again.\n";;
 	esac;
 done;
-
-# Select which hotplug should be used
-while read -p "$hpstr" hp; do
-	case $hp in
-		"1" | "" | " ")
-			echo -e "Selected driver: MPDecision\n"
-			hp="mpdec";
-			break;;
-		"2")
-			echo -e "Selected driver: AutoSMP\n"
-			hp="asmp";
-			break;;
-		*)
-			echo -e "\nInvalid option. Try again.\n";;
-	esac;
-done;		
-	
 		
 # Clean everything via `make clean` or `make mrproper`.
 # Recommended if there were extensive changes to the source code.
@@ -199,12 +172,6 @@ if [[ $forceperm = "Y" ]]; then
 	sed -i s/"# CONFIG_SECURITY_SELINUX_FORCE_PERMISSIVE is not set"/"CONFIG_SECURITY_SELINUX_FORCE_PERMISSIVE=y"/ .config;
 fi;
 
-# AutoSMP? Also edit .config
-if [[ $hp = "asmp" ]]; then
-	sed -i s/"# CONFIG_ASMP is not set"/"CONFIG_ASMP=y"/ .config;
-	sed -i s/"# CONFIG_CPU_BOOST is not set"/"CONFIG_CPU_BOOST=y"/ .config;
-fi;
-
 make -j4;
 
 if [[ -f arch/arm/boot/zImage ]]; then
@@ -222,12 +189,10 @@ maindir=$HOME/Kernel/Zip_AOSP;
 outdir=$HOME/Kernel/Out_AOSP/$device;
 devicedir=$maindir/$device;
 
-
 # Make the zip and out dirs if they don't exist
 if [ ! -d $maindir ] || [ ! -d $outdir ]; then
 	mkdir -p $maindir && mkdir -p $outdir;
 fi;
-
 
 # Use zImage + dt.img
 ./bootimgtools/dtbToolCM -2 -s 2048 -o /tmp/dt.img -p scripts/dtc/ arch/arm/boot/;
@@ -237,18 +202,10 @@ cp -f /tmp/dt.img $devicedir/;
 cp -f arch/arm/boot/zImage $devicedir/;
 
 # Set the zip's name
-if [[ $hp = "asmp" ]]; then
-	if [[ $forceperm = "Y" ]]; then
-		zipname="KaminariAOSP_"$version"-Alternative_"`echo "${device^}"`"_SELinuxForcePerm";
-	else
-		zipname="KaminariAOSP_"$version"-Alternative_"`echo "${device^}"`;
-	fi;
+if [[ $forceperm = "Y" ]]; then
+	zipname="KaminariAOSP_"$version"_"`echo "${device^}"`"_SELinuxForcePerm";
 else
-	if [[ $forceperm = "Y" ]]; then
-		zipname="KaminariAOSP_"$version"_"`echo "${device^}"`"_SELinuxForcePerm";
-	else
-		zipname="KaminariAOSP_"$version"_"`echo "${device^}"`;
-	fi;
+	zipname="KaminariAOSP_"$version"_"`echo "${device^}"`;
 fi;
 
 # Zip the stuff we need & finish
@@ -261,11 +218,7 @@ case $device in
 	# "titan")
 		# echo -e "Device: Moto G 2nd Gen (titan/thea)" > $devicedir/device.txt;;
 esac;
-if [[ $hp = "asmp" ]]; then
-	echo -e "Version: $version-alt" > $devicedir/version.txt;
-else
-	echo -e "Version: $version" > $devicedir/version.txt;
-fi;	
+echo -e "Version: $version" > $devicedir/version.txt;	
 cd $maindir/common;
 zip -r9 $outdir/$zipname.zip . > /dev/null;
 cd $devicedir;
