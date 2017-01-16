@@ -31,8 +31,8 @@ devicestr="Which device do you want to build for?
 2. Moto G (1st gen, LTE) (peregrine) ";
 
 hpstr="Which hotplug driver should this build use?
-1. MPDecision (default)
-2. AutoSMP ";
+1. AutoSMP (default)
+2. Alucard Hotplug ";
 
 cleanstr="Do you want to remove everything from the last build? (Y/N)
 
@@ -107,12 +107,12 @@ done;
 while read -p "$hpstr" hp; do
 	case $hp in
 		"1" | "" | " ")
-			echo -e "Selected driver: MPDecision\n"
-			hp="mpdec";
+			echo -e "Selected hotplug: AutoSMP\n"
+			hp="asmp";
 			break;;
 		"2")
-			echo -e "Selected driver: AutoSMP\n"
-			hp="asmp";
+			echo -e "Selected hotplug: Alucard\n"
+			hp="alucard";
 			break;;
 		*)
 			echo -e "\nInvalid option. Try again.\n";;
@@ -199,10 +199,11 @@ if [[ $forceperm = "Y" ]]; then
 	sed -i s/"# CONFIG_SECURITY_SELINUX_FORCE_PERMISSIVE is not set"/"CONFIG_SECURITY_SELINUX_FORCE_PERMISSIVE=y"/ .config;
 fi;
 
-# AutoSMP? Also edit .config
-if [[ $hp = "asmp" ]]; then
-	sed -i s/"# CONFIG_ASMP is not set"/"CONFIG_ASMP=y"/ .config;
-	sed -i s/"# CONFIG_CPU_BOOST is not set"/"CONFIG_CPU_BOOST=y"/ .config;
+# Alucard? Also edit .config
+if [[ $hp = "alucard" ]]; then
+	sed -i s/"CONFIG_ASMP=y"/"# CONFIG_ASMP is not set"/ .config;	
+	sed -i s/"# CONFIG_ALUCARD_HOTPLUG is not set"/"CONFIG_ALUCARD_HOTPLUG=y"/ .config;
+	sed -i s/"# CONFIG_MSM_RUN_QUEUE_STATS is not set"/"CONFIG_MSM_RUN_QUEUE_STATS=y"/ .config;
 fi;
 
 make -j4;
@@ -237,7 +238,7 @@ cp -f /tmp/dt.img $devicedir/;
 cp -f arch/arm/boot/zImage $devicedir/;
 
 # Set the zip's name
-if [[ $hp = "asmp" ]]; then
+if [[ $hp = "alucard" ]]; then
 	if [[ $forceperm = "Y" ]]; then
 		zipname="KaminariAOSP_"$version"-Alternative_"`echo "${device^}"`"_SELinuxForcePerm";
 	else
@@ -261,7 +262,7 @@ case $device in
 	# "titan")
 		# echo -e "Device: Moto G 2nd Gen (titan/thea)" > $devicedir/device.txt;;
 esac;
-if [[ $hp = "asmp" ]]; then
+if [[ $hp = "alucard" ]]; then
 	echo -e "Version: $version-alt" > $devicedir/version.txt;
 else
 	echo -e "Version: $version" > $devicedir/version.txt;
