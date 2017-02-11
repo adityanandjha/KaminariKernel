@@ -944,7 +944,9 @@ disable_regs:
 		pdata->panel_info.cabc_mode = CABC_OFF_MODE;
 
 	pr_info("%s-:\n", __func__);
-
+#ifdef CONFIG_POWERSUSPEND
+	set_power_suspend_state_panel_hook(POWER_SUSPEND_ACTIVE);
+#endif
 	return 0;
 }
 
