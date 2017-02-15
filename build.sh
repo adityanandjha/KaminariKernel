@@ -251,13 +251,7 @@ fi;
 
 # Zip the stuff we need & finish
 echo -e "Creating flashable ZIP...\n";
-case $device in
-	"falcon")
-		echo -e "Device: Moto G 1st Gen (falcon)" > $devicedir/device.txt;;
-	"peregrine")
-		echo -e "Device: Moto G 1st Gen w/ LTE (peregrine)" > $devicedir/device.txt;;
-	# "titan")
-		# echo -e "Device: Moto G 2nd Gen (titan/thea)" > $devicedir/device.txt;;
+echo -e $device > $devicedir/device.txt;
 esac;
 if [[ $hp = "alucard" ]]; then
 	echo -e "Version: $version-alt" > $devicedir/version.txt;
