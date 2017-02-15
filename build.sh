@@ -252,7 +252,6 @@ fi;
 # Zip the stuff we need & finish
 echo -e "Creating flashable ZIP...\n";
 echo -e $device > $devicedir/device.txt;
-esac;
 if [[ $hp = "alucard" ]]; then
 	echo -e "Version: $version-alt" > $devicedir/version.txt;
 else
