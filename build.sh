@@ -20,11 +20,12 @@ echo -e "Building KaminariKernel (AOSP)...\n";
 
 toolchainstr="Which cross-compiler toolchain do you want to use?
 1. Linaro 4.9
-2. Linaro 6.2
-3. Google/AOSP 4.8
-4. Google/AOSP 4.9 
-5. UberTC 4.9 (default)
-6. UberTC 6.0 ";
+2. Linaro 5.4
+3. Linaro 6.2
+4. Google/AOSP 4.8
+5. Google/AOSP 4.9 
+6. UberTC 4.9 (default)
+7. UberTC 6.0 ";
 
 devicestr="Which device do you want to build for?
 1. Moto G (1st gen, GSM/CDMA) (falcon)
@@ -52,27 +53,31 @@ while read -p "$toolchainstr" tc; do
 			export CROSS_COMPILE=arm-cortex_a7-linux-gnueabihf-;
 			break;;
 		"2")
+			echo -e "Selected toolchain: Linaro 5.4\n";
+			export CROSS_COMPILE=arm-linux-gnueabihf-;
+			break;;			
+		"3")
 			echo -e "Selected toolchain: Linaro 6.2\n";
 			export PATH=$HOME/Toolchains/Linaro-6.2-Generic/bin:$PATH;
 			export CROSS_COMPILE=arm-linux-gnueabihf-;
 			break;;			
-		"3")
+		"4")
 			echo -e "Selected toolchain: Google 4.8\n";
 			export PATH=$HOME/Toolchains/Google-4.8-Generic/bin:$PATH;
 			export CROSS_COMPILE=arm-eabi-;
 			break;;
 
-		"4")
+		"5")
 			echo -e "Selected toolchain: Google 4.9\n";
 			export PATH=$HOME/Toolchains/Google-4.9-Generic/bin:$PATH;
 			export CROSS_COMPILE=arm-linux-androideabi-;
 			break;;
-		"5" | "" | " ")
+		"6" | "" | " ")
 			echo -e "Selected toolchain: UberTC 4.9\n";
 			export PATH=$HOME/Toolchains/Uber-4.9-Generic/bin:$PATH;
 			export CROSS_COMPILE=arm-eabi-;
 			break;;
-		"6")
+		"7")
 			echo -e "Selected toolchain: UberTC 6.0\n";
 			export PATH=$HOME/Toolchains/Uber-6.0-Generic/bin:$PATH;
 			export CROSS_COMPILE=arm-eabi-;
@@ -188,11 +193,8 @@ done;
 echo -e "Build started on:\n`date +"%A, %d %B %Y @ %H:%M:%S %Z (GMT %:z)"`\n`date --utc +"%A, %d %B %Y @ %H:%M:%S %Z"`\n";
 starttime=`date +"%s"`;
 			
-# Remove all DTBs to avoid conflicts
-rm -rf arch/arm/boot/*.dtb;
-			
 # Build the kernel
-make aosp/"$device"_defconfig;
+make "$device"_defconfig;
 
 # Permissive selinux? Edit .config
 if [[ $forceperm = "Y" ]]; then
@@ -208,7 +210,7 @@ fi;
 
 make -j4;
 
-if [[ -f arch/arm/boot/zImage ]]; then
+if [[ -f arch/arm/boot/zImage-dtb ]]; then
 	echo -e "Code compilation finished on:\n`date +"%A, %d %B %Y @ %H:%M:%S %Z (GMT %:z)"`\n`date --utc +"%A, %d %B %Y @ %H:%M:%S %Z"`\n";
 	maketime=`date +"%s"`;
 	makediff=$(($maketime - $starttime));
@@ -223,19 +225,14 @@ maindir=$HOME/Kernel/Zip_AOSP;
 outdir=$HOME/Kernel/Out_AOSP/$device;
 devicedir=$maindir/$device;
 
-
 # Make the zip and out dirs if they don't exist
 if [ ! -d $maindir ] || [ ! -d $outdir ]; then
 	mkdir -p $maindir && mkdir -p $outdir;
 fi;
 
-
-# Use zImage + dt.img
-./bootimgtools/dtbToolCM -2 -s 2048 -o /tmp/dt.img -p scripts/dtc/ arch/arm/boot/;
-# Just copy zImage and dt.img. AnyKernel will do the rest later.
-echo -e "Copying zImage & dt.img...";
-cp -f /tmp/dt.img $devicedir/;
-cp -f arch/arm/boot/zImage $devicedir/;
+# Use zImage-dtb since AK officially supports it now
+echo -e "Copying zImage-dtb...";
+cp -f arch/arm/boot/zImage-dtb $devicedir/;
 
 # Set the zip's name
 if [[ $hp = "alucard" ]]; then
@@ -254,14 +251,7 @@ fi;
 
 # Zip the stuff we need & finish
 echo -e "Creating flashable ZIP...\n";
-case $device in
-	"falcon")
-		echo -e "Device: Moto G 1st Gen (falcon)" > $devicedir/device.txt;;
-	"peregrine")
-		echo -e "Device: Moto G 1st Gen w/ LTE (peregrine)" > $devicedir/device.txt;;
-	# "titan")
-		# echo -e "Device: Moto G 2nd Gen (titan/thea)" > $devicedir/device.txt;;
-esac;
+echo -e $device > $devicedir/device.txt;
 if [[ $hp = "alucard" ]]; then
 	echo -e "Version: $version-alt" > $devicedir/version.txt;
 else
@@ -277,5 +267,3 @@ echo -e "Build finished on:\n`date +"%A, %d %B %Y @ %H:%M:%S %Z (GMT %:z)"`\n`da
 finishtime=`date +"%s"`;
 finishdiff=$(($finishtime - $starttime));
 echo -e "This build took: $(($finishdiff / 60)) minute(s) and $(($finishdiff % 60)) second(s).\n";
-
-
