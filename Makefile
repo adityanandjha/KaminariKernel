@@ -1,6 +1,6 @@
 VERSION = 3
 PATCHLEVEL = 4
-SUBLEVEL = 42
+SUBLEVEL = 113
 EXTRAVERSION =
 NAME = Saber-toothed Squirrel
 
@@ -378,7 +378,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -O2 -mcpu=cortex-a7 -fmodulo-sched -fmodulo-sched-allow-regmoves \
 		   -mfloat-abi=softfp -mfpu=vfpv4 \
 		   -Wno-unused -Wno-array-bounds \
-		   -std=gnu89
+		   -std=gnu89 -Werror
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__

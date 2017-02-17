@@ -447,6 +447,23 @@ static void dump_header(struct task_struct *p, gfp_t gfp_mask, int order,
 		dump_tasks(memcg, nodemask);
 }
 
+/*
+ * Number of OOM killer invocations (including memcg OOM killer).
+ * Primarily used by PM freezer to check for potential races with
+ * OOM killed frozen task.
+ */
+static atomic_t oom_kills = ATOMIC_INIT(0);
+
+int oom_kills_count(void)
+{
+	return atomic_read(&oom_kills);
+}
+
+void note_oom_kill(void)
+{
+	atomic_inc(&oom_kills);
+}
+
 #define K(x) ((x) << (PAGE_SHIFT-10))
 /*
  * Must be called while holding a reference to p, which will be released upon
@@ -587,6 +604,35 @@ void check_panic_on_oom(enum oom_constraint constraint, gfp_t gfp_mask,
 	panic("Out of memory: %s panic_on_oom is enabled\n",
 		sysctl_panic_on_oom == 2 ? "compulsory" : "system-wide");
 }
+
+#ifdef CONFIG_CGROUP_MEM_RES_CTLR
+void mem_cgroup_out_of_memory(struct mem_cgroup *memcg, gfp_t gfp_mask,
+			      int order)
+{
+	unsigned long limit;
+	unsigned int points = 0;
+	struct task_struct *p;
+
+	/*
+	 * If current has a pending SIGKILL or is exiting, then automatically
+	 * select it.  The goal is to allow it to allocate so that it may
+	 * quickly exit and free its memory.
+	 */
+	if (fatal_signal_pending(current) || current->flags & PF_EXITING) {
+		set_thread_flag(TIF_MEMDIE);
+		return;
+	}
+
+	check_panic_on_oom(CONSTRAINT_MEMCG, gfp_mask, order, NULL);
+	limit = mem_cgroup_get_limit(memcg) >> PAGE_SHIFT;
+	read_lock(&tasklist_lock);
+	p = select_bad_process(&points, limit, memcg, NULL, false);
+	if (p && PTR_ERR(p) != -1UL)
+		oom_kill_process(p, gfp_mask, order, points, limit, memcg, NULL,
+				 "Memory cgroup out of memory");
+	read_unlock(&tasklist_lock);
+}
+#endif
 
 static BLOCKING_NOTIFIER_HEAD(oom_notify_list);
 

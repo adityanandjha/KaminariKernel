@@ -9,6 +9,7 @@
 #include <linux/list.h>
 #include <linux/sysctl.h>
 
+#include <net/flow.h>
 #include <net/netns/core.h>
 #include <net/netns/mib.h>
 #include <net/netns/unix.h>
@@ -22,6 +23,7 @@
 #endif
 #include <net/netns/xfrm.h>
 
+struct user_namespace;
 struct proc_dir_entry;
 struct net_device;
 struct sock;
@@ -52,6 +54,8 @@ struct net {
 	struct list_head	cleanup_list;	/* namespaces on death row */
 	struct list_head	exit_list;	/* Use only net_mutex */
 
+	struct user_namespace   *user_ns;	/* Owning user namespace */
+
 	unsigned int		proc_inum;
 
 	struct proc_dir_entry 	*proc_net;
@@ -68,6 +72,7 @@ struct net {
 	struct hlist_head 	*dev_name_head;
 	struct hlist_head	*dev_index_head;
 	unsigned int		dev_base_seq;	/* protected by rtnl_mutex */
+	int			ifindex;
 
 	/* core fib_rules */
 	struct list_head	rules_ops;
@@ -105,22 +110,26 @@ struct net {
 	struct netns_ipvs	*ipvs;
 };
 
-
 #include <linux/seq_file_net.h>
 
 /* Init's network namespace */
 extern struct net init_net;
 
-#ifdef CONFIG_NET
-extern struct net *copy_net_ns(unsigned long flags, struct net *net_ns);
+#ifdef CONFIG_NET_NS
+extern struct net *copy_net_ns(unsigned long flags,
+	struct user_namespace *user_ns, struct net *old_net);
 
-#else /* CONFIG_NET */
-static inline struct net *copy_net_ns(unsigned long flags, struct net *net_ns)
+#else /* CONFIG_NET_NS */
+#include <linux/sched.h>
+#include <linux/nsproxy.h>
+static inline struct net *copy_net_ns(unsigned long flags,
+	struct user_namespace *user_ns, struct net *old_net)
 {
-	/* There is nothing to copy so this is a noop */
-	return net_ns;
+	if (flags & CLONE_NEWNET)
+		return ERR_PTR(-EINVAL);
+	return old_net;
 }
-#endif /* CONFIG_NET */
+#endif /* CONFIG_NET_NS */
 
 
 extern struct list_head net_namespace_list;
