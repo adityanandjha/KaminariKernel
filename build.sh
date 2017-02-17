@@ -16,7 +16,7 @@ bold=`tput bold`;
 normal=`tput sgr0`;
 
 # Let's start...
-echo -e "Building KaminariKernel (AOSP w/ Overclock)...\n";
+echo -e "Building KaminariKernel (AOSP Prime Edition)...\n";
 
 toolchainstr="Which cross-compiler toolchain do you want to use?
 1. Linaro 4.9
@@ -148,24 +148,24 @@ while read -p "Do you want to specify a release/version number? (Just press ente
 		for i in $sequence; do
 			if [ `echo $rel | gawk --re-interval "/^R$i/"` ]; then
 				echo -e "Release number: $rel\n";
-				export LOCALVERSION="-Kaminari-$rel-Overclocked";
+				export LOCALVERSION="-Kaminari-$rel-Prime";
 				version=$rel;
 			fi;
 		done;
 	elif [[ `echo $rel | gawk --re-interval "/^v/"` ]]; then
 		echo -e "Version number: $rel\n";
-		export LOCALVERSION="-Kaminari-$rel-Overclocked";
+		export LOCALVERSION="-Kaminari-$rel-Prime";
 		version=$rel;
 	else
 		case $rel in
 			"" | " " )
 				echo -e "No release number was specified. Labelling this build as testing/nightly.\n";
-				export LOCALVERSION="-Kaminari-Testing-Overclocked";
+				export LOCALVERSION="-Kaminari-Testing-Prime";
 				version=`date --utc "+%Y%m%d.%H%M%S"`;
 				break;;
 			*)
 				echo -e "Localversion set as: $rel\n";
-				export LOCALVERSION="-Kaminari-$rel-Overclocked";
+				export LOCALVERSION="-Kaminari-$rel-Prime";
 				version=$rel;
 				break;;
 		esac;
@@ -221,8 +221,8 @@ else
 fi;
 
 # Define directories (zip, out)
-maindir=$HOME/Kernel/Zip_AOSP_Overclock;
-outdir=$HOME/Kernel/Out_AOSP_Overclock/$device;
+maindir=$HOME/Kernel/Zip_AOSP_Prime;
+outdir=$HOME/Kernel/Out_AOSP_Prime/$device;
 devicedir=$maindir/$device;
 
 # Make the zip and out dirs if they don't exist
@@ -237,15 +237,15 @@ cp -f arch/arm/boot/zImage-dtb $devicedir/;
 # Set the zip's name
 if [[ $hp = "alucard" ]]; then
 	if [[ $forceperm = "Y" ]]; then
-		zipname="KaminariAOSP_"$version"-Alternative_"`echo "${device^}"`"_Overclock_SELinuxForcePerm";
+		zipname="KaminariAOSP_"$version"-Alternative_"`echo "${device^}"`"_Prime_SELinuxForcePerm";
 	else
-		zipname="KaminariAOSP_"$version"-Alternative_"`echo "${device^}"`"_Overclock";
+		zipname="KaminariAOSP_"$version"-Alternative_"`echo "${device^}"`"_Prime";
 	fi;
 else
 	if [[ $forceperm = "Y" ]]; then
-		zipname="KaminariAOSP_"$version"_"`echo "${device^}"`"_Overclock_SELinuxForcePerm";
+		zipname="KaminariAOSP_"$version"_"`echo "${device^}"`"_Prime_SELinuxForcePerm";
 	else
-		zipname="KaminariAOSP_"$version"_"`echo "${device^}"`"_Overclock";
+		zipname="KaminariAOSP_"$version"_"`echo "${device^}"`"_Prime";
 	fi;
 fi;
 
