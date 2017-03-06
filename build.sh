@@ -37,9 +37,7 @@ hpstr="Which hotplug driver should this build use?
 
 cleanstr="Do you want to remove everything from the last build? (Y/N)
 
-You ${bold}MUST${normal} do this if: 
-1. You have changed toolchains;
-2. You have built an AOSP Standard version and will now build an AOSP Alternative (or vice-versa). ";
+You ${bold}MUST${normal} do this if you have changed toolchains and/or hotplugs. ";
 
 selstr="Do you want to force SELinux to stay in Permissive mode?
 Only say Yes if you're aware of the security risks this may introduce! (Y/N) ";
