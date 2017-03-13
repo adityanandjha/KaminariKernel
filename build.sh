@@ -33,7 +33,7 @@ devicestr="Which device do you want to build for?
 
 hpstr="Which hotplug driver should this build use?
 1. AutoSMP (default)
-2. Alucard Hotplug ";
+2. MSM Hotplug ";
 
 cleanstr="Do you want to remove everything from the last build? (Y/N)
 
@@ -114,8 +114,8 @@ while read -p "$hpstr" hp; do
 			hp="asmp";
 			break;;
 		"2")
-			echo -e "Selected hotplug: Alucard\n"
-			hp="alucard";
+			echo -e "Selected hotplug: MSM Hotplug\n"
+			hp="msm";
 			break;;
 		*)
 			echo -e "\nInvalid option. Try again.\n";;
@@ -199,10 +199,10 @@ if [[ $forceperm = "Y" ]]; then
 	sed -i s/"# CONFIG_SECURITY_SELINUX_FORCE_PERMISSIVE is not set"/"CONFIG_SECURITY_SELINUX_FORCE_PERMISSIVE=y"/ .config;
 fi;
 
-# Alucard? Also edit .config
-if [[ $hp = "alucard" ]]; then
+# MSM Hotplug? Also edit .config
+if [[ $hp = "msm" ]]; then
 	sed -i s/"CONFIG_ASMP=y"/"# CONFIG_ASMP is not set"/ .config;	
-	sed -i s/"# CONFIG_ALUCARD_HOTPLUG is not set"/"CONFIG_ALUCARD_HOTPLUG=y"/ .config;
+	sed -i s/"# CONFIG_MSM_HOTPLUG is not set"/"CONFIG_MSM_HOTPLUG=y"/ .config;
 	sed -i s/"# CONFIG_MSM_RUN_QUEUE_STATS is not set"/"CONFIG_MSM_RUN_QUEUE_STATS=y"/ .config;
 fi;
 
@@ -233,24 +233,24 @@ echo -e "Copying zImage-dtb...";
 cp -f arch/arm/boot/zImage-dtb $devicedir/;
 
 # Set the zip's name
-if [[ $hp = "alucard" ]]; then
+if [[ $hp = "msm" ]]; then
 	if [[ $forceperm = "Y" ]]; then
-		zipname="KaminariAOSP_"$version"-Alternative_"`echo "${device^}"`"_SELinuxForcePerm";
+		zipname="Kaminari_"$version"-Alternative_"`echo "${device^}"`"_SELinuxForcePerm";
 	else
-		zipname="KaminariAOSP_"$version"-Alternative_"`echo "${device^}"`;
+		zipname="Kaminari_"$version"-Alternative_"`echo "${device^}"`;
 	fi;
 else
 	if [[ $forceperm = "Y" ]]; then
-		zipname="KaminariAOSP_"$version"_"`echo "${device^}"`"_SELinuxForcePerm";
+		zipname="Kaminari_"$version"_"`echo "${device^}"`"_SELinuxForcePerm";
 	else
-		zipname="KaminariAOSP_"$version"_"`echo "${device^}"`;
+		zipname="Kaminari_"$version"_"`echo "${device^}"`;
 	fi;
 fi;
 
 # Zip the stuff we need & finish
 echo -e "Creating flashable ZIP...\n";
 echo -e $device > $devicedir/device.txt;
-if [[ $hp = "alucard" ]]; then
+if [[ $hp = "msm" ]]; then
 	echo -e "Version: $version-alt" > $devicedir/version.txt;
 else
 	echo -e "Version: $version" > $devicedir/version.txt;
