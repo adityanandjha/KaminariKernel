@@ -12,7 +12,7 @@ CONFIG_KEXEC_HARDBOOT=y
 
 # Hotplugs
 CONFIG_ASMP=y
-# CONFIG_ALUCARD_HOTPLUG is not set
+# CONFIG_MSM_HOTPLUG is not set
 # CONFIG_MSM_RUN_QUEUE_STATS is not set
 
 # Arch tweaks
