@@ -20,18 +20,11 @@ normal=`tput sgr0`;
 # Let's start...
 echo -e "Building KaminariKernel (AOSP)...\n";
 
-## toolchainstr="Which cross-compiler toolchain do you want to use?
-## 1. Linaro 4.9
-## 2. Linaro 5.4
-## 3. Linaro 6.2
-## 4. Google/AOSP 4.8
-## 5. Google/AOSP 4.9 
-## 6. UberTC 4.9 (default)
-## 7. UberTC 6.0 ";
-
 devicestr="Which device do you want to build for?
-1. Moto G (1st gen, GSM/CDMA) (falcon)
-2. Moto G (1st gen, LTE) (peregrine) ";
+1. Moto G (falcon)
+2. Moto G 4G (peregrine) 
+3. Moto G 2014 (titan)
+4. Moto G 2014 LTE (thea) ";
 
 cleanstr="Do you want to remove everything from the last build? (Y/N)
 
@@ -40,64 +33,25 @@ You ${bold}MUST${normal} do this if you have changed toolchains and/or hotplugs.
 selstr="Do you want to force SELinux to stay in Permissive mode?
 Only say Yes if you're aware of the security risks this may introduce! (Y/N) ";
 
-# Select which toolchain should be used & Set up the cross-compiler (pt. 2)
-# while read -p "$toolchainstr" tc; do
-#	case $tc in
-# 		"1")
-# 			echo -e "Selected toolchain: Linaro 4.9\n";
-# 			export PATH=$HOME/Toolchains/Linaro-4.9-CortexA7/bin:$PATH;
-# 			export CROSS_COMPILE=arm-cortex_a7-linux-gnueabihf-;
-# 			break;;
-# 		"2")
-# 			echo -e "Selected toolchain: Linaro 5.4\n";
-# 			export CROSS_COMPILE=arm-linux-gnueabihf-;
-# 			break;;			
-# 		"3")
-# 			echo -e "Selected toolchain: Linaro 6.2\n";
-# 			export PATH=$HOME/Toolchains/Linaro-6.2-Generic/bin:$PATH;
-# 			export CROSS_COMPILE=arm-linux-gnueabihf-;
-# 			break;;			
-# 		"4")
-# 			echo -e "Selected toolchain: Google 4.8\n";
-# 			export PATH=$HOME/Toolchains/Google-4.8-Generic/bin:$PATH;
-# 			export CROSS_COMPILE=arm-eabi-;
-# 			break;;
-# 		"5")
-# 			echo -e "Selected toolchain: Google 4.9\n";
-# 			export PATH=$HOME/Toolchains/Google-4.9-Generic/bin:$PATH;
-# 			export CROSS_COMPILE=arm-linux-androideabi-;
-# 			break;;
-# 		"6" | "" | " ")
-# 			echo -e "Selected toolchain: UberTC 4.9\n";
-# 			export PATH=$HOME/Toolchains/Uber-4.9-Generic/bin:$PATH;
-# 			export CROSS_COMPILE=arm-eabi-;
-# 			break;;
-# 		"7")
-# 			echo -e "Selected toolchain: UberTC 6.0\n";
-# 			export PATH=$HOME/Toolchains/Uber-6.0-Generic/bin:$PATH;
-# 			export CROSS_COMPILE=arm-eabi-;
-# 			break;;			
-# 		*)
-# 			echo -e "\nInvalid option. Try again.\n";;
-# 	esac;
-# done;			
-		
-
 # Select which device the kernel should be built for
 while read -p "$devicestr" dev; do
 	case $dev in
 		"1")
-			echo -e "Selected device: Moto G GSM/CDMA (falcon)\n"
+			echo -e "Selected device: Moto G (falcon)\n"
 			device="falcon";
 			break;;
 		"2")
-			echo -e "Selected device: Moto G LTE (peregrine)\n"
+			echo -e "Selected device: Moto G 4G (peregrine)\n"
 			device="peregrine";
 			break;;
-#		"3")
-#			echo -e "Selected device: Moto G 2nd Gen (GSM/LTE) (titan/thea)\n"
-#			device="titan";
-#			break;;
+		"3")
+			echo -e "Selected device: Moto G 2014 (titan)\n"
+			device="titan";
+			break;;
+		"4")
+			echo -e "Selected device: Moto G 2014 LTE (thea)\n"
+                        device="thea";
+                        break;;	
 		*)
 			echo -e "\nInvalid option. Try again.\n";;
 	esac;
@@ -179,7 +133,8 @@ if [[ $forceperm = "Y" ]]; then
 	sed -i s/"# CONFIG_SECURITY_SELINUX_FORCE_PERMISSIVE is not set"/"CONFIG_SECURITY_SELINUX_FORCE_PERMISSIVE=y"/ .config;
 fi;
 
-make -j4;
+# 2x no. of CPU cores
+make -j$((`nproc --all` * 2));
 
 if [[ -f arch/arm/boot/zImage-dtb ]]; then
 	echo -e "Code compilation finished on:\n`date +"%A, %d %B %Y @ %H:%M:%S %Z (GMT %:z)"`\n`date --utc +"%A, %d %B %Y @ %H:%M:%S %Z"`\n";
@@ -217,6 +172,8 @@ echo -e "Creating flashable ZIP...\n";
 echo -e $device > $devicedir/device.txt;
 echo -e "Version: $version" > $devicedir/version.txt;
 cd $maindir/common;
+zip -r9 $outdir/$zipname.zip . > /dev/null;
+cd $maindir/std;
 zip -r9 $outdir/$zipname.zip . > /dev/null;
 cd $devicedir;
 zip -r9 $outdir/$zipname.zip * > /dev/null;
