@@ -126,7 +126,11 @@ echo -e "Build started on:\n`date +"%A, %d %B %Y @ %H:%M:%S %Z (GMT %:z)"`\n`dat
 starttime=`date +"%s"`;
 			
 # Build the kernel
-make "$device"_defconfig;
+if [[ $device != "thea" ]]; then
+	make "$device"_defconfig;
+else
+	make titan_defconfig;
+fi;
 
 # Permissive selinux? Edit .config
 if [[ $forceperm = "Y" ]]; then
