@@ -18,7 +18,7 @@ bold=`tput bold`;
 normal=`tput sgr0`;
 
 # Let's start...
-echo -e "Building KaminariKernel (AOSP)...\n";
+echo -e "Building KaminariKernel (Overclocked Edition)...\n";
 
 devicestr="Which device do you want to build for?
 1. Moto G (falcon)
@@ -162,9 +162,9 @@ cp -f arch/arm/boot/zImage-dtb $devicedir/;
 
 # Set the zip's name
 if [[ $forceperm = "Y" ]]; then
-	zipname="Kaminari_"$version"_"`echo "${device^}"`"_SELinuxForcePerm";
+	zipname="Kaminari_"$version"_"`echo "${device^}"`"_Overclocked_SELinuxForcePerm";
 else
-	zipname="Kaminari_"$version"_"`echo "${device^}"`;
+	zipname="Kaminari_"$version"_"`echo "${device^}"`"_Overclocked";
 fi;
 
 # Zip the stuff we need & finish
@@ -173,8 +173,8 @@ echo -e $device > $devicedir/device.txt;
 echo -e "Version: $version" > $devicedir/version.txt;
 cd $maindir/common;
 zip -r9 $outdir/$zipname.zip . > /dev/null;
-cd $maindir/std;
-zip -r9 $outdir/$zipname.zip . > /dev/null;
+cd $maindir/oc;
+zip -r9 $outdir/$zipname.zip * > /dev/null;
 cd $devicedir;
 zip -r9 $outdir/$zipname.zip * > /dev/null;
 echo -e "Done!"
