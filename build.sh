@@ -174,7 +174,7 @@ echo -e "Version: $version" > $devicedir/version.txt;
 cd $maindir/common;
 zip -r9 $outdir/$zipname.zip . > /dev/null;
 cd $maindir/std;
-zip -r9 $outdir/$zipname.zip . > /dev/null;
+zip -r9 $outdir/$zipname.zip * > /dev/null;
 cd $devicedir;
 zip -r9 $outdir/$zipname.zip * > /dev/null;
 echo -e "Done!"
